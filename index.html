@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sine Function — Periodicity Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --panel: #111118;
+    --border: #1e1e2e;
+    --accent: #00e5ff;
+    --accent2: #ff4d6d;
+    --accent3: #b5ff4d;
+    --text: #e8e8f0;
+    --muted: #555570;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 40px;
+    overflow-x: hidden;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 28px;
+    animation: fadeDown 0.7s ease both;
+  }
+
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header p {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeUp 0.8s ease 0.2s both;
+  }
+
+  .canvas-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .canvas-wrap::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+  }
+
+  canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+
+  .ctrl-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    transition: border-color 0.2s;
+  }
+
+  .ctrl-card:hover { border-color: var(--accent); }
+
+  .ctrl-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .ctrl-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  .ctrl-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .ctrl-desc {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .info-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .info-chip {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+
+  .info-chip .label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+  .info-chip .val { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-top: 4px; color: var(--text); }
+  .info-chip .val.cyan { color: var(--accent); }
+  .info-chip .val.red { color: var(--accent2); }
+  .info-chip .val.green { color: var(--accent3); }
+
+  .animate-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text);
+    letter-spacing: 1px;
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+  }
+
+  .animate-toggle:hover { border-color: var(--accent3); background: #161622; }
+
+  .toggle-dot {
+    width: 32px; height: 18px;
+    background: var(--border);
+    border-radius: 9px;
+    position: relative;
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+
+  .toggle-dot::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: transform 0.3s, background 0.3s;
+  }
+
+  .animate-toggle.on .toggle-dot { background: rgba(181,255,77,0.2); }
+  .animate-toggle.on .toggle-dot::after { transform: translateX(14px); background: var(--accent3); }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sine Periodicity Explorer</h1>
+  <p>f(x) = A · sin(Bx + C) + D &nbsp;|&nbsp; x in degrees</p>
+</header>
+
+<div class="container">
+
+  <!-- Info chips -->
+  <div class="info-row">
+    <div class="info-chip">
+      <div class="label">Period</div>
+      <div class="val cyan" id="chip-period">2π</div>
+    </div>
+    <div class="info-chip">
+      <div class="label">Amplitude</div>
+      <div class="val red" id="chip-amp">1.0</div>
+    </div>
+    <div class="info-chip">
+      <div class="label">Frequency</div>
+      <div class="val green" id="chip-freq">1.0</div>
+    </div>
+    <div class="info-chip">
+      <div class="label">Phase Shift</div>
+      <div class="val" id="chip-phase">0.00π</div>
+    </div>
+    <div class="info-chip">
+      <div class="label">Vertical Shift</div>
+      <div class="val" id="chip-vert">0.0</div>
+    </div>
+  </div>
+
+  <!-- Canvas -->
+  <div class="canvas-wrap">
+    <canvas id="graph" width="868" height="340"></canvas>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+
+    <div class="ctrl-card">
+      <div class="ctrl-label">
+        <span class="ctrl-name">A — Amplitude</span>
+        <span class="ctrl-value" id="lbl-a">1.0</span>
+      </div>
+      <p class="ctrl-desc">Controls peak height. Stretches the wave vertically.</p>
+      <input type="range" id="slider-a" min="0.1" max="3" step="0.1" value="1">
+    </div>
+
+    <div class="ctrl-card">
+      <div class="ctrl-label">
+        <span class="ctrl-name">B — Frequency</span>
+        <span class="ctrl-value" id="lbl-b">1.0</span>
+      </div>
+      <p class="ctrl-desc">Controls how many cycles fit in 2π. Period = 2π/B.</p>
+      <input type="range" id="slider-b" min="0.25" max="4" step="0.25" value="1">
+    </div>
+
+    <div class="ctrl-card">
+      <div class="ctrl-label">
+        <span class="ctrl-name">C — Phase</span>
+        <span class="ctrl-value" id="lbl-c">0.00π</span>
+      </div>
+      <p class="ctrl-desc">Horizontal shift. Moves the wave left or right.</p>
+      <input type="range" id="slider-c" min="-3.14159" max="3.14159" step="0.1" value="0">
+    </div>
+
+    <div class="ctrl-card">
+      <div class="ctrl-label">
+        <span class="ctrl-name">D — Vertical</span>
+        <span class="ctrl-value" id="lbl-d">0.0</span>
+      </div>
+      <p class="ctrl-desc">Shifts the midline up or down along the y-axis.</p>
+      <input type="range" id="slider-d" min="-2" max="2" step="0.1" value="0">
+    </div>
+
+  </div>
+
+  <!-- Animate toggle -->
+  <div class="animate-toggle" id="anim-toggle">
+    <div class="toggle-dot" id="toggle-dot"></div>
+    ANIMATE PHASE SHIFT
+  </div>
+
+</div>
+
+<script>
+  const canvas = document.getElementById('graph');
+  const ctx = canvas.getContext('2d');
+
+  let A = 1, B = 1, C = 0, D = 0;
+  let animating = false;
+  let animPhase = 0;
+  let rafId;
+
+  const PI = Math.PI;
+
+  function getSlider(id) { return parseFloat(document.getElementById(id).value); }
+
+  function updateLabels() {
+    A = getSlider('slider-a');
+    B = getSlider('slider-b');
+    C = getSlider('slider-c');
+    D = getSlider('slider-d');
+
+    document.getElementById('lbl-a').textContent = A.toFixed(1);
+    document.getElementById('lbl-b').textContent = B.toFixed(2);
+    document.getElementById('lbl-c').textContent = (C / PI * 180).toFixed(1) + '°';
+    document.getElementById('lbl-d').textContent = D.toFixed(1);
+
+    const period = (2 * PI / B);
+    document.getElementById('chip-period').textContent = (360 / B).toFixed(1) + '°';
+    document.getElementById('chip-amp').textContent = A.toFixed(1);
+    document.getElementById('chip-freq').textContent = B.toFixed(2);
+    document.getElementById('chip-phase').textContent = (C / PI * 180).toFixed(1) + '°';
+    document.getElementById('chip-vert').textContent = D.toFixed(1);
+  }
+
+  function draw(phaseOverride) {
+    const W = canvas.width;
+    const H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const effectiveC = animating ? phaseOverride : C;
+
+    // background grid
+    ctx.strokeStyle = '#1a1a2a';
+    ctx.lineWidth = 1;
+    const xSteps = 8;
+    const ySteps = 6;
+    for (let i = 0; i <= xSteps; i++) {
+      const x = i / xSteps * W;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let j = 0; j <= ySteps; j++) {
+      const y = j / ySteps * H;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // axes
+    const midY = H / 2 - D * (H / 8);
+    ctx.strokeStyle = '#2e2e4a';
+    ctx.lineWidth = 1.5;
+    // x-axis
+    ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+    // y-axis
+    ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
+
+    // midline (D shift)
+    if (D !== 0) {
+      const mY = H/2 - D * (H/8);
+      ctx.strokeStyle = '#ff4d6d55';
+      ctx.setLineDash([6, 4]);
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(0, mY); ctx.lineTo(W, mY); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // x-axis labels
+    ctx.fillStyle = '#55556a';
+    ctx.font = '10px Space Mono, monospace';
+    ctx.textAlign = 'center';
+    const xRange = 4 * PI;
+    const labelPts = [-4, -3, -2, -1, 0, 1, 2, 3, 4].map(n => n * PI);
+    for (const v of labelPts) {
+      const px = (v / xRange + 0.5) * W;
+      const label = v === 0 ? '0°' : (v/PI * 180).toFixed(0) + '°';
+      ctx.fillText(label, px, H/2 + 14);
+    }
+
+    // period markers — shade one period
+    const period = 2 * PI / B;
+    const startX = -effectiveC / B;
+    const sx = (startX / xRange + 0.5) * W;
+    const ex = ((startX + period) / xRange + 0.5) * W;
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.04)';
+    ctx.fillRect(sx, 0, ex - sx, H);
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.2)';
+    ctx.setLineDash([4, 3]);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ex, 0); ctx.lineTo(ex, H); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // period label
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.5)';
+    ctx.font = '9px Space Mono, monospace';
+    ctx.textAlign = 'center';
+    if (ex - sx > 30) {
+      ctx.fillText('T = ' + (360/B).toFixed(1)+'°', (sx+ex)/2, 14);
+    }
+
+    // amplitude arrows
+    const ampPx = A * (H / 8);
+    const cx2 = W * 0.88;
+    ctx.strokeStyle = '#ff4d6d66';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx2, H/2); ctx.lineTo(cx2, H/2 - ampPx); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx2, H/2); ctx.lineTo(cx2, H/2 + ampPx); ctx.stroke();
+    ctx.fillStyle = '#ff4d6daa';
+    ctx.font = '9px Space Mono, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('A='+A.toFixed(1), cx2 + 5, H/2 - ampPx/2);
+
+    // draw sine wave
+    const scale = H / 8;
+    ctx.shadowColor = '#00e5ff';
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = '#00e5ff';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let px = 0; px <= W; px++) {
+      const x = (px / W - 0.5) * xRange;
+      const y = A * Math.sin(B * x + effectiveC) + D;
+      const py = H / 2 - y * scale;
+      if (px === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // key points: zeros, peaks, troughs
+    const points = [];
+    const step = 0.001;
+    for (let x = -xRange/2; x <= xRange/2; x += step) {
+      const y = A * Math.sin(B * x + effectiveC) + D;
+      const yNext = A * Math.sin(B * (x+step) + effectiveC) + D;
+      // peak
+      if (y >= yNext && y > A * 0.99 + D) {
+        points.push({ x, y, type: 'peak' });
+        x += 0.3;
+      }
+      // trough
+      if (y <= yNext && y < -A * 0.99 + D) {
+        points.push({ x, y, type: 'trough' });
+        x += 0.3;
+      }
+    }
+    // zero crossings (rough)
+    for (let x = -xRange/2; x <= xRange/2 - step; x += step) {
+      const y = A * Math.sin(B * x + effectiveC) + D;
+      const yNext = A * Math.sin(B * (x+step) + effectiveC) + D;
+      if (Math.sign(y - D) !== Math.sign(yNext - D)) {
+        points.push({ x: x + step/2, y: D, type: 'zero' });
+        x += 0.1;
+      }
+    }
+
+    for (const pt of points) {
+      const px = (pt.x / xRange + 0.5) * W;
+      const py = H / 2 - pt.y * scale;
+      if (px < 0 || px > W) continue;
+
+      if (pt.type === 'peak') {
+        ctx.beginPath();
+        ctx.arc(px, py, 5, 0, 2 * PI);
+        ctx.fillStyle = '#b5ff4d';
+        ctx.shadowColor = '#b5ff4d';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      } else if (pt.type === 'trough') {
+        ctx.beginPath();
+        ctx.arc(px, py, 5, 0, 2 * PI);
+        ctx.fillStyle = '#ff4d6d';
+        ctx.shadowColor = '#ff4d6d';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      } else {
+        ctx.beginPath();
+        ctx.arc(px, py, 3.5, 0, 2 * PI);
+        ctx.fillStyle = '#ffffff44';
+        ctx.fill();
+      }
+    }
+
+    // legend
+    const items = [
+      { color: '#b5ff4d', label: '● Peak' },
+      { color: '#ff4d6d', label: '● Trough' },
+      { color: '#ffffff44', label: '● Zero' },
+    ];
+    ctx.font = '9px Space Mono, monospace';
+    ctx.textAlign = 'left';
+    let lx = 12;
+    for (const it of items) {
+      ctx.fillStyle = it.color;
+      ctx.fillText(it.label, lx, H - 10);
+      lx += 80;
+    }
+  }
+
+  function animate() {
+    animPhase += 0.02;
+    draw(animPhase);
+    rafId = requestAnimationFrame(animate);
+  }
+
+  ['slider-a','slider-b','slider-c','slider-d'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      updateLabels();
+      if (!animating) draw();
+    });
+  });
+
+  document.getElementById('anim-toggle').addEventListener('click', function() {
+    animating = !animating;
+    this.classList.toggle('on', animating);
+    if (animating) {
+      animPhase = C;
+      animate();
+    } else {
+      cancelAnimationFrame(rafId);
+      updateLabels();
+      draw();
+    }
+  });
+
+  updateLabels();
+  draw();
+</script>
+</body>
+</html>
